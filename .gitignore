@@ -1,0 +1,9 @@
+*.class
+/bin/
+*.classpath
+*.project
+build.properties
+build.xml
+/target/
+*.idea
+.DS_Store
