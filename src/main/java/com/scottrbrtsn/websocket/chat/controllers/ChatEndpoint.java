@@ -1,19 +1,16 @@
 package com.scottrbrtsn.websocket.chat.controllers;
 
 
-import com.scottrbrtsn.websocket.chat.message.OutputMessage;
 import com.scottrbrtsn.websocket.chat.message.Message;
+import com.scottrbrtsn.websocket.chat.message.OutputMessage;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-
 @Controller
-@RequestMapping(value = "/chat/{username}")
 public class ChatEndpoint {
 
     @MessageMapping("/chat")
