@@ -18,7 +18,7 @@ public class ChatEndpoint {
     public OutputMessage send(final Message message) {
 
         final String time = new SimpleDateFormat("HH:mm").format(new Date());
-        return new OutputMessage(message.getFrom(), message.getContent(), time);
+        return new OutputMessage(message.getContent(), message.getFrom(), time);
     }
 
 }

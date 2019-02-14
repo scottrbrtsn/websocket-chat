@@ -1,0 +1,29 @@
+#
+# Schemas must have at least a query root type
+#
+schema {
+    query: Query
+    subscription : Subscription
+}
+
+type Query {
+    hello : String
+}
+
+type Subscription {
+    subMessages(topics:[String]) : MessageUpdate!
+}
+
+type MessageUpdate {
+    from : String
+    content : Message
+    time : String
+}
+
+type Message {
+    message : String
+}
+
+extend type Message {
+
+}

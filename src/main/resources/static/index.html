@@ -1,75 +1,123 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <title>Chat WebSocket</title>
-    <script src="./js/sockjs-0.3.4.js"></script>
-    <script src="./js/stomp.js"></script>
-    <script type="text/javascript">
-        var stompClient = null;
-
-        function setConnected(connected) {
-            document.getElementById('connect').disabled = connected;
-            document.getElementById('disconnect').disabled = !connected;
-            document.getElementById('conversationDiv').style.visibility
-                = connected ? 'visible' : 'hidden';
-            document.getElementById('response').innerHTML = '';
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Subscriptions over Web Sockets</title>
+    <style>
+        body {
+            font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+            font-weight: 300;
         }
 
-        function connect() {
-            var socket = new SockJS('/chat');
-            stompClient = Stomp.over(socket);
-            stompClient.connect({}, function(frame) {
-                setConnected(true);
-                console.log('Connected: ' + frame);
-                stompClient.subscribe('/topic/messages', function(messageOutput) {
-                    showMessageOutput(JSON.parse(messageOutput.body));
+        .networking {
+            display: none;
+        }
+
+    </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <script>
+
+        function networkBlip() {
+
+            var $networking = $('.networking');
+            if (!$networking.is(":visible")) {
+                $networking.show(100, function () {
+                    var $that = $(this);
+                    setTimeout(function () {
+                        $that.hide();
+                    }, 500)
                 });
-            });
-        }
-
-        function disconnect() {
-            if(stompClient != null) {
-                stompClient.disconnect();
             }
-            setConnected(false);
-            console.log("Disconnected");
         }
 
-        function sendMessage() {
-            var from = document.getElementById('from').value;
-            var text = document.getElementById('text').value;
-            stompClient.send("/app/chat", {},
-                JSON.stringify({'from':from, 'content':text}));
+        function subscribeToMessages() {
+            // var exampleSocket = new WebSocket("ws://ceofs-seb-dot-shell-dtest.appspot.com:443/subscriptions");
+            // var exampleSocket = new WebSocket("ws://173.194.79.153:80/subscriptions");
+            var exampleSocket = new WebSocket("ws://localhost:9000/subscriptions");
+            networkBlip();
+
+            exampleSocket.onopen = function () {
+                networkBlip();
+                console.log("web socket opened");
+
+                var from = ['Bob', 'Scott', 'Emil'];
+                var query = 'subscription MessageSubscription($topics : [String]) { \n' +
+                    '    subMessages (topics: $topics) {' +
+                    '       from\n' +
+                    '       content { \n' +
+                    '           fieldChangeMe\n' +
+                    '           } \n' +
+                    '       time\n' +
+                    '     }' +
+                    '}';
+                var graphqlMsg = {
+                    query: query,
+                    variables: {
+                        'topics': topics
+                    }
+                };
+                exampleSocket.send(JSON.stringify(graphqlMsg));
+            };
+
+            var contentList = [];
+
+            exampleSocket.onmessage = function (event) {
+                networkBlip();
+
+                var data = JSON.parse(event.data);
+                var msg = data.data.subMessages;
+                var content = msg.content;
+                contentList.push(JSON.stringify(msg));
+
+                $('.messageTicker').html(contentList)
+
+            };
         }
 
-        function showMessageOutput(messageOutput) {
-            var response = document.getElementById('response');
-            var p = document.createElement('p');
-            p.style.wordWrap = 'break-word';
-            p.appendChild(document.createTextNode(messageOutput.from + ": "
-                + messageOutput.content + " (" + messageOutput.time + ")"));
-            response.appendChild(p);
-        }
+        window.addEventListener("load", subscribeToMessages);
     </script>
 </head>
-<body onload="disconnect()">
-<div>
-    <div>
-        <input type="text" id="from" placeholder="Choose a nickname"/>
-    </div>
-    <br />
-    <div>
-        <button id="connect" onclick="connect();">Connect</button>
-        <button id="disconnect" disabled="disabled" onclick="disconnect();">
-            Disconnect
-        </button>
-    </div>
-    <br />
-    <div id="conversationDiv">
-        <input type="text" id="text" placeholder="Write a message..."/>
-        <button id="sendMessage" onclick="sendMessage();">Send</button>
-        <p id="response"></p>
-    </div>
+<body>
+
+<div class="jumbotron text-center">
+    <h2>graphql-java Subscriptions</h2>
+    <p>An example of graphql-java subscriptions sending continuous updates over websockets</p>
 </div>
 
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-1">
+            <img src="./avatar.png"
+                 class="img-thumbnail" alt="graphql-java" width="400" height="400">
+        </div>
+        <div class="col-sm-3">
+            <h3>Explanation</h3>
+            <p>This demonstrates the use of graphql subscriptions and web sockets</p>
+            <p>The graphql query used in this example is :</p>
+            <pre>
+subscription MessageSubscription {
+    subMessages {
+        topic
+        content {
+                State
+        }
+        time
+    }
+}
+            </pre>
+        </div>
+        <div class="col-sm-8">
+            <h3>Message Updates</h3>
+            <div class="messageTicker">Pending subscription...</div>
+            <div class="networking">📡</div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
